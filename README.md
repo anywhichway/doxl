@@ -1,6 +1,6 @@
-# doxl v0.1.0
+# doxl v0.1.1
 
-Like GraphQL except for Javascript objects, extracts and optionally transforms sub-objects from Javascript objects.
+Kind of like GraphQL except for Javascript objects. Extracts and optionally transforms sub-objects from Javascript objects. Just 640 bytes compressed and gzipped.
 
 # Installation
 
@@ -22,14 +22,14 @@ subset of source, if any, that has the found properties from the query such that
   3) have a value that results from calling a function on the source with the query property value as arguments
   
 
-```
+```javascript
 const match = doxl({name:doxl.ANY,age:value => value >= 21},
 					 {name:"joe",age:21,gender:"male",address:{city:"seattle"}});
 ```
 
 will return
 
-```
+```javascript
 {name:"joe",age:21,address:{city:"seattle"}}}
 ```
 
@@ -68,37 +68,37 @@ will return
 A `source` can have an undefined property and still have a successful match by using `doxl.UNDEFINEDOK`.
 
 
-```
+```javascript
 doxl({name:olx.ANY,age:doxl.ANY,gender:doxl.UNDEFINEDOK()},{age:21,name:"joe"});
 ```
 
 will match:
 
-```
+```javascript
 {name:"joe",age:21}
 ```
 
 And,
 
-```
+```javascript
 doxl({name:olx.ANY,age:doxl.ANY,gender:doxl.UNDEFINEDOK()},{age:21,name:"joe",gender:"male"});
 ```
 
 will match:
 
-```
+```javascript
 {name:"joe",age:21,gender:"male"}
 ```
 
 Whereas,
 
-```
+```javascript
 doxl({name:olx.ANY,age:doxl.ANY,gender:doxl.UNDEFINEDOK("undeclared")},{age:21,name:"joe"});
 ```
 
 will match:
 
-```
+```javascript
 {name:"joe",age:21,gender:"undeclared"}
 ```
 
@@ -107,7 +107,7 @@ will match:
 
 Assume you have an array of objects you wish to search, you can reduce it using `reduce` and `doxl`:
 
-```
+```javascript
 [{name:"joe",age:21,employed:true},
  {name:"mary",age:20,employed:true},
  {name:"jack",age:22,employed:false}
@@ -120,19 +120,19 @@ Assume you have an array of objects you wish to search, you can reduce it using 
 
 will match:
 
-```
+```javascript
 {name:"jack",age:22,employed:false}
 ```
 
 ## Re-Ordering Keys
 
-```
+```javascript
 doxl({name:olx.ANY,age:doxl.ANY},{age:21,name:"joe"});
 ```
 
 will return:
 
-```
+```javascript
 {name:"joe",age:21}
 ```
 
@@ -140,7 +140,7 @@ will return:
 
 If your source objects are class instances with methods or objects containing functions, they will get resolved:
 
-```
+```javascript
 class Person {
 			constructor({firstName,lastName,favoriteNumbers=[]}) {
 				this.firstName = firstName;
@@ -171,7 +171,7 @@ class Person {
 
 will match:
 
-```
+```javascript
 {name:"contrary, mary",someFavoriteNumber:7}
 ```
 
@@ -179,13 +179,13 @@ will match:
 
 If the option `transform` is truthy, object transformations can occur:
 
-```
+```javascript
 doxl({size: value => size * 2},{size: 2},{transform:true});
 ```
 
 results in:
 
-```
+```javascript
 {size: 4}
 ```
 
@@ -198,7 +198,9 @@ new syntax and semantics. The `doxl` library is small and pure Javascript.
 
 # Release History (reverse chronological order)
 
-2018-08-02 First public release as independent module.
+2018-08-02 v0.1.1 Documentation updates.
+
+2018-08-02 v0.1.0 First public release as independent module.
 
 # License
 

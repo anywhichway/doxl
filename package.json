@@ -1,6 +1,6 @@
 {
 	"name": "doxl",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "Like GraphQL except for Javascript objects, extracts and optionally transforms sub-objects from Javascript objects.",
 	"private": false,
 	"isomorphic": true,
