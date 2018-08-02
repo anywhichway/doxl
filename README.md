@@ -1,18 +1,18 @@
-# oxl v0.1.0
+# doxl v0.1.0
 
 Like GraphQL except for Javascript objects, extracts and optionally transforms sub-objects from Javascript objects.
 
 # Installation
 
-npm install oxl
+npm install doxl
 
-The browser version does not require transpiling but exists at `browser/oxl.js`.
+The browser version does not require transpiling but exists at `browser/doxl.js`.
 
 # Usage
 
-Either include `oxl.js` through an import stamement, script tag or require statement. Then it is pretty darn simple ...
+Either include `doxl.js` through an import stamement, script tag or require statement. Then it is pretty darn simple ...
 
-Just call `oxl(query,source)` where query and source are both JavaScript objects. The value returned will be the
+Just call `doxl(query,source)` where query and source are both JavaScript objects. The value returned will be the
 subset of source, if any, that has the found properties from the query such that they have at least one of the following:
 
   1) an exact match for value
@@ -23,7 +23,7 @@ subset of source, if any, that has the found properties from the query such that
   
 
 ```
-const match = oxl({name:oxl.ANY,age:value => value >= 21},
+const match = doxl({name:doxl.ANY,age:value => value >= 21},
 					 {name:"joe",age:21,gender:"male",address:{city:"seattle"}});
 ```
 
@@ -35,7 +35,7 @@ will return
 
 # API
 
-`oxl(query,source,{full,constructorMatch,transform,schema}={})` - 
+`doxl(query,source,{partial,constructorMatch,transform,schema}={})` - 
 
   `query` - An object, possibly nested, that contains properties to extract and values to literally match or functions to test for a match.
   
@@ -44,7 +44,7 @@ will return
   the array required for `...queryValue` is done automatically. If your function takes a single argument that is an array, then you must nest
   it one level, e.g. `f(someArray)` should be use the query `{f:[matchingArray]}` not `{f:matchingArray}`.
   
-  `full` - The default behavior is to return partial matches. If `full` is truthy, then a value will only be returned if all properties match.
+  `partial` - The default behavior is to return only full matches. If `partial` is truthy, then a value will returned for any properties match.
   
   `constructorMatch` - Typically the `query` and `source` will be POJOs and with the exception of `Array`, `Date`, `RegExp`, `Map`, 
   and `Set` the class of a source or its nested objects is ignored. If `constructorMatch` is truthy, then the constructors for the `query`
@@ -56,20 +56,20 @@ will return
   
   `schema` - Reserved for future use.
   
- `oxl.ANY` - A utility function defined as `() => true` that will match any value.
+ `doxl.ANY` - A utility function defined as `() => true` that will match any value.
  
- `oxl.UNDEFINEDOK(default)` - A utility function that will match undefined properties in the `source`. If `default` is provided, it will be
+ `doxl.UNDEFINEDOK(default)` - A utility function that will match undefined properties in the `source`. If `default` is provided, it will be
  returned as the value for the undefined property.
 
 # Application Techniques
 
 ## Handling `undefined`
 
-A `source` can have an undefined property and still have a successful match by using `oxl.UNDEFINEDOK`.
+A `source` can have an undefined property and still have a successful match by using `doxl.UNDEFINEDOK`.
 
 
 ```
-oxl({name:olx.ANY,age:oxl.ANY,gender:oxl.UNDEFINEDOK()},{age:21,name:"joe"},{all:true});
+doxl({name:olx.ANY,age:doxl.ANY,gender:doxl.UNDEFINEDOK()},{age:21,name:"joe"});
 ```
 
 will match:
@@ -81,7 +81,7 @@ will match:
 And,
 
 ```
-oxl({name:olx.ANY,age:oxl.ANY,gender:oxl.UNDEFINEDOK()},{age:21,name:"joe",gender:"male"},{all:true});
+doxl({name:olx.ANY,age:doxl.ANY,gender:doxl.UNDEFINEDOK()},{age:21,name:"joe",gender:"male"});
 ```
 
 will match:
@@ -93,7 +93,7 @@ will match:
 Whereas,
 
 ```
-oxl({name:olx.ANY,age:oxl.ANY,gender:oxl.UNDEFINEDOK("undeclared")},{age:21,name:"joe"},{all:true});
+doxl({name:olx.ANY,age:doxl.ANY,gender:doxl.UNDEFINEDOK("undeclared")},{age:21,name:"joe"});
 ```
 
 will match:
@@ -105,14 +105,14 @@ will match:
 
 ## Processing Arrays Of Possible Matches
 
-Assume you have an array of objects you wish to search, you can reduce it using `reduce` and `oxl`:
+Assume you have an array of objects you wish to search, you can reduce it using `reduce` and `doxl`:
 
 ```
 [{name:"joe",age:21,employed:true},
  {name:"mary",age:20,employed:true},
  {name:"jack",age:22,employed:false}
 ].reduce(item => {
-	const match = oxl({name:oxl.ANY,age:value => value >= 21,employed:false},item,{all:true}));
+	const match = doxl({name:doxl.ANY,age:value => value >= 21,employed:false},item,{all:true}));
 	if(match) accum.push(match);
 	return accum;
 },[]);
@@ -127,7 +127,7 @@ will match:
 ## Re-Ordering Keys
 
 ```
-oxl({name:olx.ANY,age:oxl.ANY},{age:21,name:"joe"});
+doxl({name:olx.ANY,age:doxl.ANY},{age:21,name:"joe"});
 ```
 
 will return:
@@ -163,7 +163,7 @@ class Person {
 				];
 
 		const matches = people.reduce((accum,item) => { 
-				const match = oxl({name:oxl.ANY,someFavoriteNumber:7},item,{all:true});
+				const match = doxl({name:doxl.ANY,someFavoriteNumber:7},item,{all:true});
 				if(match) accum.push(match);
 				return accum;
 			},[]);
@@ -180,7 +180,7 @@ will match:
 If the option `transform` is truthy, object transformations can occur:
 
 ```
-oxl({size: value => size * 2},{size: 2},{transform:true});
+doxl({size: value => size * 2},{size: 2},{transform:true});
 ```
 
 results in:
@@ -189,11 +189,11 @@ results in:
 {size: 4}
 ```
 
-# Why oxl
+# Why doxl
 
 Most other extraction and transformation libraries require specifying critical specification as strings that need to be parsed
 increasing the library size and the chance for typographical errors. In the extreme case they for the developer to learn an entirely
-new syntax and semantics. The `oxl` library is small and pure Javascript.
+new syntax and semantics. The `doxl` library is small and pure Javascript.
 
 
 # Release History (reverse chronological order)

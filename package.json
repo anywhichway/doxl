@@ -1,17 +1,17 @@
 {
-	"name": "oxl",
+	"name": "doxl",
 	"version": "0.1.0",
-	"description": "Like GraphQL except for Javascript objects, extracts sub-objects from Javascript objects.",
+	"description": "Like GraphQL except for Javascript objects, extracts and optionally transforms sub-objects from Javascript objects.",
 	"private": false,
 	"isomorphic": true,
 	"keywords": [],
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/oxl/oxl.git"
+		"url": "git+https://github.com/doxl/doxl.git"
 	},
 	"scripts": {
-		"prepare": "cp index.js browser/oxl.js"
+		"prepare": "cp index.js browser/doxl.js"
 	},
 	"dependencies": {},
 	"devDependencies": {
