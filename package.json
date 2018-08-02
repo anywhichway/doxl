@@ -1,0 +1,24 @@
+{
+	"name": "oxl",
+	"version": "0.1.0",
+	"description": "Like GraphQL except for Javascript objects, extracts sub-objects from Javascript objects.",
+	"private": false,
+	"isomorphic": true,
+	"keywords": [],
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/oxl/oxl.git"
+	},
+	"scripts": {
+		"prepare": "cp index.js browser/oxl.js"
+	},
+	"dependencies": {},
+	"devDependencies": {
+		"chai": "^4.1.0",
+		"mocha": "^3.4.2"
+	},
+	"engines": {
+		"node": "9.x"
+	}
+}
