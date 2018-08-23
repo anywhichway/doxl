@@ -4,11 +4,13 @@ var chai,
 
 if(typeof(module)!=="undefined") {
 	doxl = require("../index.js");
+	chai = require("chai");
+	expect = chai.expect;
 }
 
 console.log("Testing ...");
 
-const SOURCE = {bool:true,num:1,nil:null,str:"str",nested:{num:1},array:[1,"1"]};
+const SOURCE = {f:function(v=1) { return this.str+v; },bool:true,num:1,nil:null,str:"str",nested:{num:1},array:[1,"1"]};
 
 describe("all tests",function() {
 	it("literal boolean match",function(done) {
@@ -66,32 +68,49 @@ describe("all tests",function() {
 		done();
 	});
 	it("all multi-match",function(done) {
-		const query = Object.keys(SOURCE).reduce((accum,key) => { accum[key] = doxl.ANY; return accum; },{});
-			match = doxl(query,SOURCE);
-		expect(JSON.stringify(match)).equal(JSON.stringify(SOURCE));
+		const query = Object.keys(SOURCE).reduce((accum,key) => { accum[key] = doxl.ANY(); return accum; },{});
+			match = doxl(query,SOURCE),
+			source = Object.assign({},SOURCE);
+		source.f = source.f();
+		expect(JSON.stringify(match)).equal(JSON.stringify(source));
+		done();
+	});
+	it("all multi-match with args",function(done) {
+		const query = Object.keys(SOURCE).reduce((accum,key) => { accum[key] = doxl.ANY(2); return accum; },{});
+			match = doxl(query,SOURCE),
+			source = Object.assign({},SOURCE);
+		source.f = source.f(2);
+		expect(JSON.stringify(match)).equal(JSON.stringify(source));
 		done();
 	});
 	it("undefined",function(done) {
-		const match = doxl({name:doxl.ANY,age:doxl.ANY,gender:doxl.UNDEFINEDOK()},{age:21,name:"joe"});
+		const match = doxl({name:doxl.ANY,age:doxl.ANY,gender:doxl.UNDEFINED()},{age:21,name:"joe"});
 		expect(JSON.stringify(match)).equal(JSON.stringify({name:"joe",age:21}));
 		done();
 	});
 	it("not undefined",function(done) {
-		const match = doxl({name:doxl.ANY,age:doxl.ANY,gender:doxl.UNDEFINEDOK()},{age:21,name:"joe",gender:"male"});
+		const match = doxl({name:doxl.ANY,age:doxl.ANY,gender:doxl.UNDEFINED()},{age:21,name:"joe",gender:"male"});
 		expect(JSON.stringify(match)).equal(JSON.stringify({name:"joe",age:21,gender:"male"}));
 		done();
 	});
 	it("undefined default",function(done) {
-		const match = doxl({name:doxl.ANY,age:doxl.ANY,gender:doxl.UNDEFINEDOK("undeclared")},{age:21,name:"joe"});
+		const match = doxl({name:doxl.ANY,age:doxl.ANY,gender:doxl.UNDEFINED("undeclared")},{age:21,name:"joe"});
 		expect(JSON.stringify(match)).equal(JSON.stringify({name:"joe",age:21,gender:"undeclared"}));
 		done();
 	});
-	it("reduce",function(done) {
+	it("longhand reduce",function(done) {
 		const matches = [{name:"joe",age:21,employed:true},{name:"mary",age:20,employed:true},{name:"jack",age:22,employed:false}].reduce((accum,item) => {
 				const match = doxl({name:doxl.ANY,age:value => value >= 21,employed:false},item);
 				if(match) accum.push(match);
 				return accum;
 			},[]);
+		console.log(matches)
+		expect(matches.length).equal(1);
+		expect(JSON.stringify(matches[0])).equal(JSON.stringify({name:"jack",age:22,employed:false}));
+		done();
+	});
+	it("reduce",function(done) {
+		const matches = doxl.reduce([{name:"joe",age:21,employed:true},{name:"mary",age:20,employed:true},{name:"jack",age:22,employed:false}],{name:doxl.ANY,age:value => value >= 21,employed:false});
 		console.log(matches)
 		expect(matches.length).equal(1);
 		expect(JSON.stringify(matches[0])).equal(JSON.stringify({name:"jack",age:22,employed:false}));
@@ -120,7 +139,7 @@ describe("all tests",function() {
 				];
 
 		const matches = people.reduce((accum,item) => { 
-				const match = doxl({name:doxl.ANY,someFavoriteNumber:7},item);
+				const match = doxl({name:doxl.ANY(),someFavoriteNumber:7},item);
 				if(match) accum.push(match);
 				return accum;
 			},[]);
