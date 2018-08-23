@@ -1,4 +1,4 @@
-# doxl v0.1.2
+# doxl v0.1.3
 
 Kind of like GraphQL except for Javascript objects. Extracts and optionally transforms sub-objects from Javascript objects. Just 714 bytes compressed and gzipped.
 
@@ -10,10 +10,10 @@ The browser version does not require transpiling but exists at `browser/doxl.js`
 
 # Usage
 
-Either include `doxl.js` through an import stamement, script tag or require statement. Then it is pretty darn simple ...
+Either include `doxl.js` through an import statement, script tag or require statement. Then it is pretty darn simple ...
 
 Just call `doxl(query,source)` where query and source are both JavaScript objects. The value returned will be the
-subset of source, if any, that has such that its properties satisfy at least one of the following:
+subset of source, if any, such that its properties satisfy at least one of the following:
 
   1) the value was an exact match for the same property on the query
   
@@ -82,7 +82,7 @@ in JavaScript, all but the first value is ignored, e.g.
 
 The additional arguments are for advanced use. Behind the scenes, the functions `doxl.ANY` and `doxl.UNDEFINED` are implemented in a manner that usese these extended arguments.
 
-If a `doxl` is invoked with a query and the option `tranform:true`, then the return value of the function is used as the property value rather than the value on the source object.
+If a `doxl` is invoked with a query and the option `tranform:true`, then the return value of the function is used as the property value rather than the value on the source object, unless it is `undefined`.
 
 ## Handling `undefined`
 
@@ -136,7 +136,7 @@ Assume you have an array of objects you wish to search, you can reduce it using 
  {name:"mary",age:20,employed:true},
  {name:"jack",age:22,employed:false}
 ].reduce(item => {
-	const match = doxl({name:doxl.ANY(),age:value => value >= 21,employed:false},item));
+	const match = doxl({name:doxl.ANY(),age:value => value > 21,employed:false},item));
 	if(match) accum.push(match);
 	return accum;
 },[]);
@@ -242,6 +242,8 @@ increasing the library size and the chance for typographical errors. In the extr
 new syntax and semantics. The `doxl` library is small and pure Javascript.
 
 # Release History (reverse chronological order)
+
+2018-08-24 v0.1.3 Documentation updates.
 
 2018-08-23 v0.1.2 Documentation updates. Changes to behavior of `doxl.ANY`, which is now a function and can pass arguments to underlying query targets. 
 Enhancements to `doxl.UNDEFINED` to do the same. Also, renamed `doxl.UNDEFINEDOK` to simply `doxl.UNDEFINED`.
