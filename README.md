@@ -1,4 +1,4 @@
-# doxl v0.1.3
+# doxl v0.1.4
 
 Kind of like GraphQL except for Javascript objects. Extracts and optionally transforms sub-objects from Javascript objects. Just 714 bytes compressed and gzipped.
 
@@ -40,18 +40,18 @@ will return
   `query` - An object, possibly nested, that contains properties to extract and values to literally match or functions to test for a match.
   
   `source` - An object from which to extract data. Any functions on the source object will be called with the arguments
-  `(...queryValue)`, with `this` bound to `source`. For fat arrow functions, `source` is not available. Mapping single arguments into
+  `(...queryValue)`, with `this` bound to `source`. For fat arrow functions, `source` is not available as `this`. Mapping single arguments into
   the array required for `...queryValue` is done automatically. If your function takes a single argument that is an array, then you must nest
-  it one level, e.g. `f(someArray)` should be use the query `{f:[matchingArray]}` not `{f:matchingArray}`.
+  it one level, e.g. `f(someArray)` should use the query `{f:[matchingArray]}` not `{f:matchingArray}`.
   
-  `partial` - The default behavior is to return only full matches. If `partial` is truthy, then a value will returned for any properties match.
+  `partial` - The default behavior is to return only full matches. If `partial` is truthy, then a value will returned if any properties match.
   
   `constructorMatch` - Typically the `query` and `source` will be POJOs and with the exception of `Array`, `Date`, `RegExp`, `Map`, 
   and `Set` the class of a source or its nested objects is ignored. If `constructorMatch` is truthy, then the constructors for the `query`
   and `source` must match.
   
-  `transform` - Typically any functions in the `query` are treates as predicated that return a truthy or falsy value; however, if `transform` is
-  truthy then these functions can consume the value from the `source` and return the same or a different value. If the value returned is `undefined`,
+  `transform` - Typically any functions in the `query` are treated as predicates that return a truthy or falsy value; however, if `transform` is
+  truthy then these functions will consume the value from the `source` and return the same or a different value for use in the result. If the value returned is `undefined`,
   then it is assumed no match occured.
   
   `schema` - Reserved for future use.
@@ -59,7 +59,7 @@ will return
  `doxl.ANY(...args)` - A utility function match any value. If the optional `...args` are passed in and the value on the underlying object being queried is a function,
  then it will be called with the args and the `this` scope set to the object being queried. 
  
- `doxl.UNDEFINED(default)` - A utility function that will match undefined properties in the `source`. If `default` is provided, it will be
+ `doxl.UNDEFINED(default,...args)` - A utility function that will match undefined properties in the `source`. If `default` is provided, it will be
  returned as the value for the undefined property.
 
 # Application Techniques
@@ -82,7 +82,7 @@ in JavaScript, all but the first value is ignored, e.g.
 
 The additional arguments are for advanced use. Behind the scenes, the functions `doxl.ANY` and `doxl.UNDEFINED` are implemented in a manner that usese these extended arguments.
 
-If a `doxl` is invoked with a query and the option `tranform:true`, then the return value of the function is used as the property value rather than the value on the source object, unless it is `undefined`.
+If `doxl` is invoked with a query and the option `tranform:true`, then the return value of the function is used as the property value rather than the value on the source object, unless it is `undefined`.
 
 ## Handling `undefined`
 
@@ -237,11 +237,11 @@ results in:
 
 # Why doxl
 
-Most other extraction and transformation libraries require using strings that need to be parsed
-increasing the library size and the chance for typographical errors. In the extreme case they force the developer to learn an entirely
-new syntax and semantics. The `doxl` library is small and pure Javascript.
+There are other extraction and transformation libraries, but most require using strings that need to be parsed, increasing the library size and the chance for typographical errors. In the extreme case, they introduce domain specific languages that force the developer to learn an entirely new syntax and semantics. The DOXL library allows the expression of extraction directives as pure JavaScript and is very small.
 
 # Release History (reverse chronological order)
+
+2018-08-24 v0.1.4 Documentation updates.
 
 2018-08-24 v0.1.3 Documentation updates.
 
