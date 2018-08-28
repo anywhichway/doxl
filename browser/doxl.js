@@ -50,8 +50,9 @@
 			}
 			if(value instanceof Variable) {
 				if(variables[value.name]===undefined) {
-					value.value = variables[value.name] = svalue;
+					variables[value.name] = svalue;
 				}
+				value.value = variables[value.name];
 				if(variables[value.name]!==svalue) {
 					if(!partial) {
 						return null;
@@ -85,7 +86,7 @@
 				}
 				if(value instanceof Array) {
 					if(svalue instanceof Array && svalue.length===value.length) {
-						const subdoc = doxl(value,svalue,{partial,constructorMatch,transform,schema});
+						const subdoc = doxl(value,svalue,{partial,constructorMatch,transform,schema},variables);
 						if(subdoc!==null) {
 							accum || (accum = Array.isArray(query) ? [] : {});
 							accum[key] = subdoc;
@@ -103,7 +104,7 @@
 							svalues = svalue.values();
 						if(values.every(value => {
 							return svalues.some(svalue => {
-								return doxl(value,svalue,{partial,constructorMatch,transform,schema});
+								return doxl(value,svalue,{partial,constructorMatch,transform,schema},variables);
 							})
 						})) {
 							accum || (accum = Array.isArray(query) ? [] : {});
@@ -114,7 +115,7 @@
 					}
 					return accum;
 				}
-				const subdoc = doxl(value,svalue,{partial,constructorMatch,transform,schema});
+				const subdoc = doxl(value,svalue,{partial,constructorMatch,transform,schema},variables);
 				if(subdoc!==null) {
 					accum || (accum = Array.isArray(query) ? [] : {});
 					accum[key] = subdoc;

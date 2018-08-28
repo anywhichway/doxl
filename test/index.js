@@ -106,11 +106,22 @@ describe("all tests",function() {
 		expect(JSON.stringify(match)).equal(JSON.stringify(query));
 		done();
 	});
+	it("complex variable match",function(done) {
+		const matches = $.reduce([
+      {partners:[{name:"joe"},{name:"joe"}]},
+      {partners:[{name:"mary"},{name:"john"}]}
+      ],
+      {partners:[{name:$.var("n")},{name:$.var("n")}]});
+		expect(matches.length).equal(1);
+		expect(JSON.stringify({partners:[{name:"joe"},{name:"joe"}]})).equal(JSON.stringify(matches[0]));
+		done();
+	});
 	it("skip",function(done) {
 		const query = [1,$.skip(2),1],
 			source = [1,2,3,1],
 			match = $(query,source);
 		expect(JSON.stringify(match)).equal(JSON.stringify([1,1]));
+		done();
 	});
 	it("longhand reduce",function(done) {
 		const matches = [{name:"joe",age:21,employed:true},{name:"mary",age:20,employed:true},{name:"jack",age:22,employed:false}].reduce((accum,item) => {

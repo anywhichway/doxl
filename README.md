@@ -1,4 +1,4 @@
-# doxl v0.1.5
+# doxl v0.1.6
 
 Like GraphQL except for Javascript objects, pattern matching extraction and transformation of sub-objects from Javascript objects.
 
@@ -253,6 +253,8 @@ If you assign `doxl` to the variable `$` or `_`, you can shorten your code, e.g.
 There are other extraction and transformation libraries, but most require using strings that need to be parsed, increasing the library size and the chance for typographical errors. In the extreme case, they introduce domain specific languages that force the developer to learn an entirely new syntax and semantics. The DOXL library allows the expression of extraction directives as pure JavaScript and is very small. Furthermore, few libraries support variable binding within extraction patterns.
 
 # Release History (reverse chronological order)
+
+2018-08-28 v0.1.6 Corrected binding issues for complex patterns with variables.
 
 2018-08-28 v0.1.5 Documentation updates. Deprecating `doxl.UNDEFINED` and `doxl.ANY` in favor of `doxl.undefined` and `doxl.any`. Will be unsupported as of v0.1.8. Added support for `doxl.var`.
 
