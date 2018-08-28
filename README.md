@@ -1,6 +1,8 @@
-# doxl v0.1.4
+# doxl v0.1.5
 
-Kind of like GraphQL except for Javascript objects. Extracts and optionally transforms sub-objects from Javascript objects. Just 714 bytes compressed and gzipped.
+Like GraphQL except for Javascript objects, pattern matching extraction and transformation of sub-objects from Javascript objects.
+
+Just 896 bytes compressed and gzipped.
 
 # Installation
 
@@ -23,8 +25,7 @@ subset of source, if any, such that its properties satisfy at least one of the f
   
 
 ```javascript
-const match = doxl({name:doxl.ANY(),age:value => value >= 21},
-					 {name:"joe",age:21,gender:"male",address:{city:"seattle"}});
+const match = doxl({name:doxl.any(),age:value => value >= 21},{name:"joe",age:21,gender:"male",address:{city:"seattle"}});
 ```
 
 will return
@@ -56,10 +57,14 @@ will return
   
   `schema` - Reserved for future use.
   
- `doxl.ANY(...args)` - A utility function match any value. If the optional `...args` are passed in and the value on the underlying object being queried is a function,
+ `doxl.any(...args)` - A utility function to match any value. If the optional `...args` are passed in and the value on the underlying object being queried is a function,
  then it will be called with the args and the `this` scope set to the object being queried. 
  
- `doxl.UNDEFINED(default,...args)` - A utility function that will match undefined properties in the `source`. If `default` is provided, it will be
+ `doxl.skip(count)` - A utility function to skip indexes in a source array, e.g. `[1,doxl.skip(2),1]` will match both `[1,2,3,1]` and `[1,3,3,1]`.
+ 
+ `doxl.var(name)` - A utility function to support variable binding and matching across a pattern, e.g. `[doxl.var("val"),2,doxl.var("val")]` will match arrays with the same first and last values. Variables bind from left to right and nested variables are available to higher level classes to their right, e.g, `{nested:{num:doxl.var("n")},num:doxl.var("n")}` will match `{num:1,nested:{num: 1}}`.
+ 
+ `doxl.undefined(default,...args)` - A utility function that will match undefined properties in the `source`. If `default` is provided, it will be
  returned as the value for the undefined property.
 
 # Application Techniques
@@ -74,23 +79,23 @@ Functions defined on the query should one of these two signatures:
 `(sourceValue,property,source,query) => { ...; }`
 
 When doing regular queries, they should return `true` if the `property` and `sourceValue` should be included in the result. Normally, similar to the use of `forEach`
-in JavaScript, all but the first value is ignored, e.g.
+in JavaScript, all but the first value is ignored, the additional arguments are for advanced use, e.g.
 
 ```
 {age: value => value >= 21}
 ```
 
-The additional arguments are for advanced use. Behind the scenes, the functions `doxl.ANY` and `doxl.UNDEFINED` are implemented in a manner that usese these extended arguments.
+Behind the scenes, the functions `doxl.any` and `doxl.undefined` are implemented in a manner that usese these extended arguments.
 
 If `doxl` is invoked with a query and the option `tranform:true`, then the return value of the function is used as the property value rather than the value on the source object, unless it is `undefined`.
 
 ## Handling `undefined`
 
-A `source` can have an undefined property and still have a successful match by using `doxl.UNDEFINED`.
+A `source` can have an undefined property and still have a successful match by using `doxl.undefined`.
 
 
 ```javascript
-doxl({name:olx.ANY,age:doxl.ANY(),gender:doxl.UNDEFINED()},{age:21,name:"joe"});
+doxl({name:olx.any,age:doxl.any(),gender:doxl.undefined()},{age:21,name:"joe"});
 ```
 
 will match:
@@ -102,7 +107,7 @@ will match:
 While,
 
 ```javascript
-doxl({name:olx.ANY,age:doxl.ANY(),gender:doxl.UNDEFINED()},{age:21,name:"joe",gender:"male"});
+doxl({name:olx.any,age:doxl.any(),gender:doxl.undefined()},{age:21,name:"joe",gender:"male"});
 ```
 
 will return:
@@ -111,12 +116,12 @@ will return:
 {name:"joe",age:21,gender"male"}
 ```
 
-`doxl.UNDEFINED` can also take as a second argument a default value.
+`doxl.undefined` can also take as a second argument a default value.
 
 For instance,
 
 ```javascript
-doxl({name:olx.ANY,age:doxl.ANY(),gender:doxl.UNDEFINED("undeclared")},{age:21,name:"joe"});
+doxl({name:olx.any,age:doxl.any(),gender:doxl.undefined("undeclared")},{age:21,name:"joe"});
 ```
 
 will return:
@@ -125,7 +130,7 @@ will return:
 {name:"joe",age:21,gender:"undeclared"}
 ```
 
-Finally, `doxl.UNDEFINED` cam take additional arguments which are passed to underlying target functions that match query property names.
+Finally, `doxl.undefined` cam take additional arguments which are passed to underlying target functions that match query property names.
 
 ## Processing Arrays Of Possible Matches
 
@@ -136,7 +141,7 @@ Assume you have an array of objects you wish to search, you can reduce it using 
  {name:"mary",age:20,employed:true},
  {name:"jack",age:22,employed:false}
 ].reduce(item => {
-	const match = doxl({name:doxl.ANY(),age:value => value > 21,employed:false},item));
+	const match = doxl({name:doxl.any(),age:value => value > 21,employed:false},item));
 	if(match) accum.push(match);
 	return accum;
 },[]);
@@ -154,14 +159,14 @@ There is a utility function, `doxl.reduce(array,query)` that does this for you, 
 doxl.reduce([{name:"joe",age:21,employed:true},
  {name:"mary",age:20,employed:true},
  {name:"jack",age:22,employed:false}
-],{name:doxl.ANY(),age:value => value >= 21,employed:false})
+],{name:doxl.any(),age:value => value >= 21,employed:false})
 ```
 
 
 ## Re-Ordering Keys
 
 ```javascript
-doxl({name:olx.ANY,age:doxl.ANY},{age:21,name:"joe"});
+doxl({name:olx.any(),age:doxl.any()},{age:21,name:"joe"});
 ```
 
 will return:
@@ -176,31 +181,31 @@ If your source objects are class instances with methods or objects containing fu
 
 ```javascript
 class Person {
-			constructor({firstName,lastName,favoriteNumbers=[]}) {
-				this.firstName = firstName;
-				this.lastName = lastName;
-				this.favoriteNumbers = favoriteNumbers;
-			}
-			name(salutation="") {
-				return `${salutation ? salutation+ " " : ""}${this.lastName}, ${this.firstName}`;
-			}
-			someFavoriteNumber(number) {
-				if(this.favoriteNumbers.includes(number)) {
-					return number;
-				}
-			}
+	constructor({firstName,lastName,favoriteNumbers=[]}) {
+		this.firstName = firstName;
+		this.lastName = lastName;
+		this.favoriteNumbers = favoriteNumbers;
+	}
+	name(salutation="") {
+		return `${salutation ? salutation+ " " : ""}${this.lastName}, ${this.firstName}`;
+	}
+	someFavoriteNumber(number) {
+		if(this.favoriteNumbers.includes(number)) {
+			return number;
 		}
+	}
+}
 
-		const people = [
-				new Person({firstName:"joe",lastName:"jones",favoriteNumbers:[5,15]}),
-				new Person({firstName:"mary",lastName:"contrary",favoriteNumbers:[7,14]})
-				];
+const people = [
+	new Person({firstName:"joe",lastName:"jones",favoriteNumbers:[5,15]}),
+	new Person({firstName:"mary",lastName:"contrary",favoriteNumbers:[7,14]})
+	];
 
-		const matches = people.reduce((accum,item) => { 
-				const match = doxl({name:doxl.ANY(),someFavoriteNumber:7},item,{all:true});
-				if(match) accum.push(match);
-				return accum;
-			},[]);
+const matches = people.reduce((accum,item) => { 
+		const match = doxl({name:doxl.any(),someFavoriteNumber:7},item,{all:true});
+		if(match) accum.push(match);
+		return accum;
+	},[]);
 ```
 
 will return:
@@ -211,14 +216,14 @@ will return:
 
 If the underlying object property is a function that takes multiple arguments, use `doxl.args(...args)` in place of a single value.
 
-`doxl.ANY` and `doxl.UNDEFINED` can also take arguments to pass to underlying functions, e.g.
+`doxl.any` and `doxl.undefined` can also take arguments to pass to underlying functions, e.g.
 
 ```javascript
-{name:doxl.ANY("M.")}
+{name:doxl.any("M.")}
 ```
 
 ```javascript
-{name:doxl.UNDEFINED("Secret","M.")}
+{name:doxl.undefined("Secret","M.")}
 ```
 
 ## Transformations
@@ -235,11 +240,21 @@ results in:
 {size: 4}
 ```
 
+## Shorter Code
+
+If you assign `doxl` to the variable `$` or `_`, you can shorten your code, e.g. 
+
+```javascript
+{name:$.undefined("Secret","M.")}
+```
+
 # Why doxl
 
-There are other extraction and transformation libraries, but most require using strings that need to be parsed, increasing the library size and the chance for typographical errors. In the extreme case, they introduce domain specific languages that force the developer to learn an entirely new syntax and semantics. The DOXL library allows the expression of extraction directives as pure JavaScript and is very small.
+There are other extraction and transformation libraries, but most require using strings that need to be parsed, increasing the library size and the chance for typographical errors. In the extreme case, they introduce domain specific languages that force the developer to learn an entirely new syntax and semantics. The DOXL library allows the expression of extraction directives as pure JavaScript and is very small. Furthermore, few libraries support variable binding within extraction patterns.
 
 # Release History (reverse chronological order)
+
+2018-08-28 v0.1.5 Documentation updates. Deprecating `doxl.UNDEFINED` and `doxl.ANY` in favor of `doxl.undefined` and `doxl.any`. Will be unsupported as of v0.1.8. Added support for `doxl.var`.
 
 2018-08-24 v0.1.4 Documentation updates.
 

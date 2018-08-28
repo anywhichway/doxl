@@ -8,6 +8,8 @@ if(typeof(module)!=="undefined") {
 	expect = chai.expect;
 }
 
+const $ = doxl;
+
 console.log("Testing ...");
 
 const SOURCE = {f:function(v=1) { return this.str+v; },bool:true,num:1,nil:null,str:"str",nested:{num:1},array:[1,"1"]};
@@ -15,92 +17,104 @@ const SOURCE = {f:function(v=1) { return this.str+v; },bool:true,num:1,nil:null,
 describe("all tests",function() {
 	it("literal boolean match",function(done) {
 		const query = {bool:true},
-			match = doxl(query,SOURCE);
+			match = $(query,SOURCE);
 		expect(JSON.stringify(match)).equal(JSON.stringify(query));
 		done();
 	});
 	it("literal null match",function(done) {
 		const query = {nil:null},
-			match = doxl(query,SOURCE);
+			match = $(query,SOURCE);
 		expect(JSON.stringify(match)).equal(JSON.stringify(query));
 		done();
 	});
 	it("literal number match",function(done) {
 		const query = {num:1},
-			match = doxl(query,SOURCE);
+			match = $(query,SOURCE);
 		expect(JSON.stringify(match)).equal(JSON.stringify(query));
 		done();
 	});
 	it("literal string match",function(done) {
 		const query = {str:"str"},
-			match = doxl(query,SOURCE);
+			match = $(query,SOURCE);
 		expect(JSON.stringify(match)).equal(JSON.stringify(query));
 		done();
 	});
 	it("nested match",function(done) {
 		const query = {nested:{num:1}},
-			match = doxl(query,SOURCE);
+			match = $(query,SOURCE);
 		expect(JSON.stringify(match)).equal(JSON.stringify(query));
 		done();
 	});
 	it("array match",function(done) {
 		const query = {array:[1,"1"]},
-			match = doxl(query,SOURCE);
+			match = $(query,SOURCE);
 		expect(JSON.stringify(match)).equal(JSON.stringify(query));
 		done();
 	});
 	it("functional match",function(done) {
 		const query = {num:value => value===1},
-			match = doxl(query,SOURCE);
+			match = $(query,SOURCE);
 		expect(JSON.stringify(match)).equal(JSON.stringify({num:1}));
 		done();
 	});
 	it("functional mis-match",function(done) {
 		const query = {num:value => value!==1},
-			match = doxl(query,SOURCE);
+			match = $(query,SOURCE);
 		expect(match).equal(null);
 		done();
 	});
 	it("functional match",function(done) {
 		const query = {num:value => value===1},
-			match = doxl(query,SOURCE);
+			match = $(query,SOURCE);
 		expect(JSON.stringify(match)).equal(JSON.stringify({num:1}));
 		done();
 	});
 	it("all multi-match",function(done) {
-		const query = Object.keys(SOURCE).reduce((accum,key) => { accum[key] = doxl.ANY(); return accum; },{});
-			match = doxl(query,SOURCE),
+		const query = Object.keys(SOURCE).reduce((accum,key) => { accum[key] = $.any(); return accum; },{});
+			match = $(query,SOURCE),
 			source = Object.assign({},SOURCE);
 		source.f = source.f();
 		expect(JSON.stringify(match)).equal(JSON.stringify(source));
 		done();
 	});
 	it("all multi-match with args",function(done) {
-		const query = Object.keys(SOURCE).reduce((accum,key) => { accum[key] = doxl.ANY(2); return accum; },{});
-			match = doxl(query,SOURCE),
+		const query = Object.keys(SOURCE).reduce((accum,key) => { accum[key] = $.any(2); return accum; },{});
+			match = $(query,SOURCE),
 			source = Object.assign({},SOURCE);
 		source.f = source.f(2);
 		expect(JSON.stringify(match)).equal(JSON.stringify(source));
 		done();
 	});
 	it("undefined",function(done) {
-		const match = doxl({name:doxl.ANY,age:doxl.ANY,gender:doxl.UNDEFINED()},{age:21,name:"joe"});
+		const match = $({name:$.any(),age:$.any,gender:$.undefined()},{age:21,name:"joe"});
 		expect(JSON.stringify(match)).equal(JSON.stringify({name:"joe",age:21}));
 		done();
 	});
 	it("not undefined",function(done) {
-		const match = doxl({name:doxl.ANY,age:doxl.ANY,gender:doxl.UNDEFINED()},{age:21,name:"joe",gender:"male"});
+		const match = $({name:$.any,age:$.any,gender:$.undefined()},{age:21,name:"joe",gender:"male"});
 		expect(JSON.stringify(match)).equal(JSON.stringify({name:"joe",age:21,gender:"male"}));
 		done();
 	});
 	it("undefined default",function(done) {
-		const match = doxl({name:doxl.ANY,age:doxl.ANY,gender:doxl.UNDEFINED("undeclared")},{age:21,name:"joe"});
+		const match = $({name:$.any,age:$.any,gender:$.undefined("undeclared")},{age:21,name:"joe"});
 		expect(JSON.stringify(match)).equal(JSON.stringify({name:"joe",age:21,gender:"undeclared"}));
 		done();
 	});
+	it("variable match",function(done) {
+		const query = {num:$.var("n"),nested:{num:$.var("n")}},
+			match = $(query,SOURCE);
+		expect(JSON.stringify(match)).equal(JSON.stringify(query));
+		done();
+	});
+	it("skip",function(done) {
+		const query = [1,$.skip(2),1],
+			source = [1,2,3,1],
+			match = $(query,source);
+		expect(JSON.stringify(match)).equal(JSON.stringify([1,1]));
+	});
 	it("longhand reduce",function(done) {
 		const matches = [{name:"joe",age:21,employed:true},{name:"mary",age:20,employed:true},{name:"jack",age:22,employed:false}].reduce((accum,item) => {
-				const match = doxl({name:doxl.ANY,age:value => value >= 21,employed:false},item);
+				const match = $({name:$.any,age:value => value >= 21,employed:false},item);
 				if(match) accum.push(match);
 				return accum;
 			},[]);
@@ -110,7 +124,7 @@ describe("all tests",function() {
 		done();
 	});
 	it("reduce",function(done) {
-		const matches = doxl.reduce([{name:"joe",age:21,employed:true},{name:"mary",age:20,employed:true},{name:"jack",age:22,employed:false}],{name:doxl.ANY,age:value => value >= 21,employed:false});
+		const matches = $.reduce([{name:"joe",age:21,employed:true},{name:"mary",age:20,employed:true},{name:"jack",age:22,employed:false}],{name:$.any,age:value => value >= 21,employed:false});
 		console.log(matches)
 		expect(matches.length).equal(1);
 		expect(JSON.stringify(matches[0])).equal(JSON.stringify({name:"jack",age:22,employed:false}));
@@ -139,7 +153,7 @@ describe("all tests",function() {
 				];
 
 		const matches = people.reduce((accum,item) => { 
-				const match = doxl({name:doxl.ANY(),someFavoriteNumber:7},item);
+				const match = $({name:$.any(),someFavoriteNumber:7},item);
 				if(match) accum.push(match);
 				return accum;
 			},[]);
@@ -148,7 +162,7 @@ describe("all tests",function() {
 		done();
 	});
 	it("transform",function(done) {
-		const match = doxl({size: value => value * 2},{size: 2},{transform:true});
+		const match = $({size: value => value * 2},{size: 2},{transform:true});
 		expect(JSON.stringify(match)).equal(JSON.stringify({size:4}));
 		done();
 	});

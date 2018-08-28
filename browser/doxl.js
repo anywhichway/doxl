@@ -1,17 +1,41 @@
 (function() {
 	
+	class Variable {
+		constructor(name,value) {
+			this.name = name;
+			this.value = value;
+		}
+		valueOf() {
+			return this.value;
+		}
+		toJSON() {
+			return this.value;
+		}
+	}
 	
-	const doxl = (query,source,{partial,constructorMatch,transform,schema}={}) => {
-		return Object.keys(query).reduce((accum,key) => {
-			const qvalue = query[key],
+	class Slice {
+		constructor(count) {
+			this.count = count;
+		}
+	}
+	
+	const doxl = (query,source,{partial,constructorMatch,transform,schema}={},variables={}) => {
+		let skip = 0;
+		return Object.keys(query).reduce((accum,key,i) => {
+			let qvalue = skip ? query[i+skip] : query[key],
 				qtype = typeof(qvalue),
-				svalue = source[key],
+				svalue = skip ? source[i+skip] : source[key],
 				stype = typeof(svalue);
 			if(qvalue===undefined || (svalue===undefined && qtype!=="function")) {
 				return accum;
 			}
+			if(qvalue && qtype==="object" && qvalue instanceof Slice) {
+				skip += qvalue.count;
+				qvalue = svalue = source[i+qvalue.count];
+				qtype = stype = typeof(svalue);
+			} 
 			let value = qvalue,
-				vtype = typeof(value);
+			vtype = typeof(value);
 			if(qtype==="function") {
 				value = qvalue.call(source,svalue,key,source,query);
 			} else if(stype==="function") {
@@ -23,6 +47,19 @@
 					return null;
 				}
 				return accum;
+			}
+			if(value instanceof Variable) {
+				if(variables[value.name]===undefined) {
+					value.value = variables[value.name] = svalue;
+				}
+				if(variables[value.name]!==svalue) {
+					if(!partial) {
+						return null;
+					}
+					return accum;
+				}
+				value = svalue;
+				vtype = stype;
 			}
 			if(value && svalue && qtype==="object" && vtype==="object") {
 				if(constructorMatch && svalue.constructor!==value.constructor) {
@@ -46,9 +83,9 @@
 					}
 					return accum;
 				}
-				if(svalue instanceof Array) {
+				if(value instanceof Array) {
 					if(svalue instanceof Array && svalue.length===value.length) {
-						const subdoc = doxl(value,svalue);
+						const subdoc = doxl(value,svalue,{partial,constructorMatch,transform,schema});
 						if(subdoc!==null) {
 							accum || (accum = Array.isArray(query) ? [] : {});
 							accum[key] = subdoc;
@@ -60,13 +97,13 @@
 					}
 					return accum;
 				}
-				if(qvalue instanceof Set || value instanceof Map) {
+				if(value instanceof Set || value instanceof Map) {
 					if(svalue.constructor===value.constructor && svalue.size===value.size) {
 						const values = value.values(),
 							svalues = svalue.values();
 						if(values.every(value => {
 							return svalues.some(svalue => {
-								return doxl(value,svalue);
+								return doxl(value,svalue,{partial,constructorMatch,transform,schema});
 							})
 						})) {
 							accum || (accum = Array.isArray(query) ? [] : {});
@@ -77,7 +114,7 @@
 					}
 					return accum;
 				}
-				const subdoc = doxl(value,svalue);
+				const subdoc = doxl(value,svalue,{partial,constructorMatch,transform,schema});
 				if(subdoc!==null) {
 					accum || (accum = Array.isArray(query) ? [] : {});
 					accum[key] = subdoc;
@@ -87,9 +124,9 @@
 				return accum;
 			}
 			if(qtype==="function") {
-				if(qvalue.name==="ANY" || qvalue.name==="UNDEFINED" || (value!==undefined && value!==false)) { // allow zero
+				if(qvalue.name==="any" || qvalue.name==="undfnd" || (value!==undefined && value!==false)) { // allow zero
 					accum || (accum = Array.isArray(query) ? [] : {});
-					accum[key] = (qvalue.name==="ANY" || qvalue.name==="UNDEFINED" || transform) ? value : svalue;
+					accum[key] = (qvalue.name==="any" || qvalue.name==="undfnd" || transform) ? value : svalue;
 				} else if(!partial) {
 					return null;
 				}
@@ -104,8 +141,12 @@
 			return accum;
 		},null)
 	}
-	doxl.ANY = (...args) => function ANY(sourceValue) { return typeof(sourceValue)==="function" ? sourceValue.call(this,...args) : sourceValue; };
-	doxl.UNDEFINED = (deflt,...args) => function UNDEFINED(sourceValue) { let value = typeof(sourceValue)==="function" ? sourceValue.call(this,...args) : sourceValue; return value===undefined ? deflt : value; }
+	doxl.any = (...args) => function any(sourceValue) { return typeof(sourceValue)==="function" ? sourceValue.call(this,...args) : sourceValue; };
+	doxl.undefined = (deflt,...args) => function undfnd(sourceValue) { let value = typeof(sourceValue)==="function" ? sourceValue.call(this,...args) : sourceValue; return value===undefined ? deflt : value; }
+	doxl.var = (name) => new Variable(name);
+	doxl.skip = (count) => new Slice(count);
+	doxl.ANY = doxl.any;
+	doxl.UNDEFINED = doxl.undefined;
 	doxl.reduce = (array,query) => {
 		return array.reduce((accum,item) => {
 				const match = doxl(query,item);
