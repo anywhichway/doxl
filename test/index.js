@@ -123,6 +123,34 @@ describe("all tests",function() {
 		expect(JSON.stringify(match)).equal(JSON.stringify([1,1]));
 		done();
 	});
+	it("computed skip",function(done) {
+		const query = [1,$.skip(),1],
+			source = [1,2,3,1],
+			match = $(query,source);
+		expect(JSON.stringify(match)).equal(JSON.stringify([1,1]));
+		done();
+	});
+	it("short computed skip",function(done) {
+		const query = [1,$.skip(),1],
+			source = [1,1],
+			match = $(query,source);
+		expect(JSON.stringify(match)).equal(JSON.stringify([1,1]));
+		done();
+	});
+	it("slice",function(done) {
+		const query = [1,$.slice(2),1],
+			source = [1,2,3,1],
+			match = $(query,source);
+		expect(JSON.stringify(match)).equal(JSON.stringify(source));
+		done();
+	});
+	it("computed slice",function(done) {
+		const query = [1,$.slice(),1],
+			source = [1,2,3,1],
+			match = $(query,source);
+		expect(JSON.stringify(match)).equal(JSON.stringify(source));
+		done();
+	});
 	it("longhand reduce",function(done) {
 		const matches = [{name:"joe",age:21,employed:true},{name:"mary",age:20,employed:true},{name:"jack",age:22,employed:false}].reduce((accum,item) => {
 				const match = $({name:$.any,age:value => value >= 21,employed:false},item);

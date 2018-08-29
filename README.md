@@ -1,14 +1,14 @@
-# doxl v0.1.6
+# doxl v0.1.7
 
-Like GraphQL except for Javascript objects, pattern matching extraction and transformation of sub-objects from Javascript objects.
+Kind-of like GraphQL except for Javascript objects, pattern matching extraction and transformation of sub-objects from Javascript objects.
 
-Just 896 bytes compressed and gzipped.
+Just 973 bytes compressed and gzipped.
 
 # Installation
 
 npm install doxl
 
-The browser version does not require transpiling but exists at `browser/doxl.js`.
+The browser version exists at `browser/doxl.js`.
 
 # Usage
 
@@ -31,7 +31,7 @@ const match = doxl({name:doxl.any(),age:value => value >= 21},{name:"joe",age:21
 will return
 
 ```javascript
-{name:"joe",age:21,address:{city:"seattle"}}}
+{name:"joe",age:21}
 ```
 
 # API
@@ -57,22 +57,25 @@ will return
   
   `schema` - Reserved for future use.
   
- `doxl.any(...args)` - A utility function to match any value. If the optional `...args` are passed in and the value on the underlying object being queried is a function,
- then it will be called with the args and the `this` scope set to the object being queried. 
+ `doxl.any([...args])` - A utility function to match any value. If the optional `...args` are passed in and the value on the underlying object being queried is a function,
+ then it will be called with the args and the `this` scope set to the object being queried. The return value will be used in the result.
  
- `doxl.skip(count)` - A utility function to skip indexes in a source array, e.g. `[1,doxl.skip(2),1]` will match both `[1,2,3,1]` and `[1,3,3,1]`.
+ `doxl.skip([count])` - A utility function to skip indexes in a source array without retaining their values, e.g. `[1,doxl.skip(2),1]` will match both `[1,2,3,1]` and `[1,3,3,1]` by returning `[1,1]`. If you don't pass an argument, the number to skip will be computed from the remaining count of values in the query and the length of the source array.
+ 
+ `doxl.slice([count])` - A utility function to skip indexes in a source array and retain their values, e.g. `[1,doxl.slice(2),1]` will match both `[1,2,3,1]` and `[1,3,3,1]` by returning `[1,2,3,1]` and `[1,3,3,1]`.  If you don't pass an argument, the number to skip will be computed from the remaining count of values in the query and the length of the source array.
  
  `doxl.var(name)` - A utility function to support variable binding and matching across a pattern, e.g. `[doxl.var("val"),2,doxl.var("val")]` will match arrays with the same first and last values. Variables bind from left to right and nested variables are available to higher level classes to their right, e.g, `{nested:{num:doxl.var("n")},num:doxl.var("n")}` will match `{num:1,nested:{num: 1}}`.
  
- `doxl.undefined(default,...args)` - A utility function that will match undefined properties in the `source`. If `default` is provided, it will be
- returned as the value for the undefined property.
+ `doxl.undefined(default[,...args])` - A utility function that will match undefined properties in the `source`. If `default` is provided, it will be
+ returned as the value for the undefined property. If the optional `...args` are passed in and the value on the underlying object being queried is a function,
+ then it will be called with the args and the `this` scope set to the object being queried. The return value will be used in the result.
 
 # Application Techniques
 
 
 ## Query Functions
 
-Functions defined on the query should one of these two signatures:
+Functions defined on the query should have one of these two signatures:
 
 `function(sourceValue,property,source,query) { ...; }`
 
@@ -107,7 +110,7 @@ will match:
 While,
 
 ```javascript
-doxl({name:olx.any,age:doxl.any(),gender:doxl.undefined()},{age:21,name:"joe",gender:"male"});
+doxl({name:olx.any(),age:doxl.any(),gender:doxl.undefined()},{age:21,name:"joe",gender:"male"});
 ```
 
 will return:
@@ -121,7 +124,7 @@ will return:
 For instance,
 
 ```javascript
-doxl({name:olx.any,age:doxl.any(),gender:doxl.undefined("undeclared")},{age:21,name:"joe"});
+doxl({name:olx.any(),age:doxl.any(),gender:doxl.undefined("undeclared")},{age:21,name:"joe"});
 ```
 
 will return:
@@ -130,7 +133,7 @@ will return:
 {name:"joe",age:21,gender:"undeclared"}
 ```
 
-Finally, `doxl.undefined` cam take additional arguments which are passed to underlying target functions that match query property names.
+Finally, `doxl.undefined` can take additional arguments which are passed to underlying target functions that match query property names.
 
 ## Processing Arrays Of Possible Matches
 
@@ -214,8 +217,6 @@ will return:
 [{name:"contrary, mary",someFavoriteNumber:7}]
 ```
 
-If the underlying object property is a function that takes multiple arguments, use `doxl.args(...args)` in place of a single value.
-
 `doxl.any` and `doxl.undefined` can also take arguments to pass to underlying functions, e.g.
 
 ```javascript
@@ -253,6 +254,8 @@ If you assign `doxl` to the variable `$` or `_`, you can shorten your code, e.g.
 There are other extraction and transformation libraries, but most require using strings that need to be parsed, increasing the library size and the chance for typographical errors. In the extreme case, they introduce domain specific languages that force the developer to learn an entirely new syntax and semantics. The DOXL library allows the expression of extraction directives as pure JavaScript and is very small. Furthermore, few libraries support variable binding within extraction patterns.
 
 # Release History (reverse chronological order)
+
+2018-08-28 v0.1.7 Added `doxl.skip` and `doxl.slice`.
 
 2018-08-28 v0.1.6 Corrected binding issues for complex patterns with variables.
 

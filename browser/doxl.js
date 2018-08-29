@@ -13,6 +13,12 @@
 		}
 	}
 	
+	class Skip {
+		constructor(count) {
+			this.count = count;
+		}
+	}
+	
 	class Slice {
 		constructor(count) {
 			this.count = count;
@@ -29,11 +35,22 @@
 			if(qvalue===undefined || (svalue===undefined && qtype!=="function")) {
 				return accum;
 			}
-			if(qvalue && qtype==="object" && qvalue instanceof Slice) {
+			if(qvalue && qtype==="object" && (qvalue instanceof Skip || qvalue instanceof Slice)) {
+				if(isNaN(qvalue.count)) {
+					qvalue.count = ((source.length - i) - (query.length - i)) + 1;
+				}
+				if(qvalue instanceof Slice) {
+					accum || (accum = []);
+					accum = accum.concat(source.slice(i,i+qvalue.count));
+					key = i + qvalue.count;
+				}
 				skip += qvalue.count;
-				qvalue = svalue = source[i+qvalue.count];
+				qvalue = svalue = source[i + qvalue.count];
 				qtype = stype = typeof(svalue);
-			} 
+			}
+			if(qvalue===undefined || (svalue===undefined && qtype!=="function")) {
+				return accum;
+			}
 			let value = qvalue,
 			vtype = typeof(value);
 			if(qtype==="function") {
@@ -145,7 +162,8 @@
 	doxl.any = (...args) => function any(sourceValue) { return typeof(sourceValue)==="function" ? sourceValue.call(this,...args) : sourceValue; };
 	doxl.undefined = (deflt,...args) => function undfnd(sourceValue) { let value = typeof(sourceValue)==="function" ? sourceValue.call(this,...args) : sourceValue; return value===undefined ? deflt : value; }
 	doxl.var = (name) => new Variable(name);
-	doxl.skip = (count) => new Slice(count);
+	doxl.skip = (count) => new Skip(count);
+	doxl.slice = (count) => new Slice(count);
 	doxl.ANY = doxl.any;
 	doxl.UNDEFINED = doxl.undefined;
 	doxl.reduce = (array,query) => {
