@@ -88,9 +88,9 @@ in JavaScript, all but the first value is ignored, the additional arguments are 
 {age: value => value >= 21}
 ```
 
-Behind the scenes, the functions `doxl.any` and `doxl.undefined` are implemented in a manner that usese these extended arguments.
+Behind the scenes, the functions `doxl.any` and `doxl.undefined` are implemented in a manner that uses these extended arguments.
 
-If `doxl` is invoked with a query and the option `tranform:true`, then the return value of the function is used as the property value rather than the value on the source object, unless it is `undefined`.
+If `doxl` is invoked with a query and the option `transform:true`, then the return value of the function is used as the property value rather than the value on the source object, unless it is `undefined`.
 
 ## Handling `undefined`
 
